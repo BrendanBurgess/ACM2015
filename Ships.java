@@ -37,7 +37,7 @@ public class Ships {
             sortTimes[i]= blockedTimes.poll();
         }
         Arrays.sort(sortTimes);
-        
+
         //if no ships
         if(sortTimes.length== 0) {
             System.out.println(TF - T0);
