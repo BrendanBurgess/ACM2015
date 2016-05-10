@@ -66,7 +66,7 @@ public class Cheese {
 
     public static double findVolume(double lower, double higher, double sliceVol){
         double startVolume = (higher - lower) * 100000 * 100000;
-        //System.out.println("startVolume = " + startVolume);
+        System.out.println("startVolume = " + startVolume);
         for(Hole hole : holes){
             double leftmost = hole.x - hole.r;
             double rightmost = hole.x + hole.r;
@@ -82,7 +82,7 @@ public class Cheese {
                 double d = hole.x - lower;
                 double h = rightmost - lower;
                 startVolume -= sphereCap(hole.r, d, h);
-            }else if(leftmost > lower && rightmost >  higher){
+            }else if(leftmost >= lower && rightmost >  higher){
                 double d = higher - hole.x;
                 double h = higher - lower;
                 startVolume -= sphereCap(hole.r, d, h);
