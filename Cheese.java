@@ -9,7 +9,7 @@ public class Cheese {
 
     public static Hole[] holes;
     public static double slices;
-    public static final double ERROR = .001;
+    public static final double ERROR = 0.1;
 
     private static class Hole implements Comparable<Hole>{
         public int x;
@@ -43,7 +43,7 @@ public class Cheese {
             double local = (hi + lo) / 2.0;
             //System.out.println("local = " + local);
             double volDiff = sliceVolume - findVolume(lowerBound, local, sliceVolume);
-            //System.out.println("Slice Vol = " + volDiff);
+            //System.out.println("Vol Diff = " + volDiff);
             if(Math.abs(volDiff) < ERROR){
                 //System.out.println("returned " + local);
                 return local;
@@ -58,15 +58,22 @@ public class Cheese {
         return  -1;
     }
 
-    public static double sphereCap(double r, double d, double h){
+    public static double sphereSegment(double r, double d, double h){
         //formula I found online is pih(R^2-d^2-hd-1/3h^2).
-        double inside = Math.pow(r,2) - Math.pow(d,2) - h*d - (1/3.0)*Math.pow(h,3);
+        double inside = Math.pow(r,2) - Math.pow(d,2) - h*d - (1.0/3.0)*Math.pow(h,2);
         return Math.PI * h * inside;
+    }
+
+    public static double sphereCap(double r, double h){
+        double inside = (3*r) - h;
+        return (1.0/3.0)*Math.PI*Math.pow(h,2) * inside;
     }
 
     public static double findVolume(double lower, double higher, double sliceVol){
         double startVolume = (higher - lower) * 100000 * 100000;
         System.out.println("startVolume = " + startVolume);
+        System.out.println("slice volume = " + sliceVol);
+        System.out.println("upper = " + higher);
         for(Hole hole : holes){
             double leftmost = hole.x - hole.r;
             double rightmost = hole.x + hole.r;
@@ -77,20 +84,30 @@ public class Cheese {
 
             // if fully contained
             if(leftmost >= lower && rightmost <= higher) {
+                System.out.println("Fully");
                 startVolume -= ((4 / 3.0) * Math.PI * Math.pow(hole.r, 3));
             } else if(leftmost < lower && rightmost <= higher){
-                double d = hole.x - lower;
+                System.out.println("leftbound");
                 double h = rightmost - lower;
-                startVolume -= sphereCap(hole.r, d, h);
+                startVolume -= sphereCap(hole.r, h);
             }else if(leftmost >= lower && rightmost >  higher){
-                double d = higher - hole.x;
-                double h = higher - lower;
-                startVolume -= sphereCap(hole.r, d, h);
+                System.out.println("right");
+                System.out.println(hole.r);
+                if( hole.x > higher) {
+                    double h = higher - leftmost;
+                    startVolume = startVolume - sphereCap(hole.r, h);
+                } else{
+                    double h = higher - hole.x;
+                    startVolume = startVolume - sphereSegment(hole.r, 0, h);
+                    startVolume = startVolume - 0.5*((4.0 / 3.0) * Math.PI * Math.pow(hole.r, 3));
+                }
             } else{
-                startVolume -= sphereCap(hole.r, hole.x - lower, higher - lower);
+                //System.out.println("overlap");
+                startVolume -= sphereSegment(hole.r, Math.abs(hole.x - lower), higher - lower);
             }
 
         }
+        System.out.println("returned volume = " + startVolume);
         return startVolume;
     }
 
@@ -131,6 +148,7 @@ public class Cheese {
             Arrays.sort(holes);
             double totalVolume = Math.pow(100 * 1000, 3) - volume;
             double volPerSlice = totalVolume / slices;
+            System.out.println(totalVolume);
             System.out.println("Slice vol = " + volPerSlice);
             calcVolume(volPerSlice);
         }
