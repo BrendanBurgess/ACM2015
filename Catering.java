@@ -7,7 +7,7 @@ import java.util.Scanner;
  */
 public class Catering {
 
-    private static final int inf = 1000000;
+    private static final int inf = 10000000;
     private int[] parent;
     private int[] cost;
 
@@ -25,7 +25,7 @@ public class Catering {
                 }
             }
 
-            //set weight on start nodes to 0;
+            //set weight on start nodes to 0
             for(int start = 1; start< teams +requests; start ++){
                 aMatrix[0][start] = 0;
             }
@@ -35,7 +35,28 @@ public class Catering {
                 aMatrix[request][numOfNodes -1] = 0;
             }
 
+            int[] teamValues = new int[requests];
+            for (int i = 0; i < teamValues.length; i++) {
+                teamValues[i] = sc.nextInt();
+            }
 
+            for (int team = 1; team <= teams ; team++) {
+                for (int request = 0; request < requests; request++) {
+                    aMatrix[team][teams + requests + request] = teamValues[request];
+                }
+            }
+
+            // builds up costs from location u to location v
+            for (int start = 1 + teams; start < teams + requests; start++) {
+                for (int finish = start + requests; finish < numOfNodes - 1; finish++) {
+                    aMatrix[start][finish] = sc.nextInt();
+                }
+            }
+
+
+
+
+            /*
             for(int request = teams + requests; request < numOfNodes -1; request++){
                 int costToRequest = sc.nextInt();
                 for(int team = 1; team <= teams; team++){
@@ -52,7 +73,7 @@ public class Catering {
                 counter --;
             }
 
-            /*
+
             for (int i = 0; i < numOfNodes; i++) {
                 for (int j = 0; j < numOfNodes; j++) {
                     if(aMatrix[i][j] == inf)
@@ -64,7 +85,9 @@ public class Catering {
             }
             */
 
-            
+
+
+
             minCostMatching(aMatrix, requests, teams);
         }
     }
@@ -128,7 +151,7 @@ public class Catering {
         for(int startSpots = 1; startSpots < teams + requests; startSpots++){
             for(int node = 0; node < aMatrix.length; node++){
                 if(aMatrix[startSpots][node] != inf && newAMatrix[node][startSpots] != inf){
-                    minCost+= aMatrix[startSpots][node];
+                    minCost += aMatrix[startSpots][node];
                 }
             }
         }

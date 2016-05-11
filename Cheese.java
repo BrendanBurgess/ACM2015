@@ -1,5 +1,6 @@
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.Scanner;
 
 /**
@@ -9,30 +10,20 @@ public class Cheese {
 
     public static Hole[] holes;
     public static double slices;
-    public static final double ERROR = 0.1;
 
     private static class Hole implements Comparable<Hole>{
-        public int x;
-        public int y;
         public int z;
         public int r;
 
-        public Hole(int x, int y, int z, int r){
-            this.x = x;
-            this.y = y;
+        public Hole(int z, int r){
             this.z = z;
             this.r = r;
         }
 
         public int compareTo(Hole other){
-            return (this.x - this.r) - (other.x - other.r);
+            return (this.z - this.r) - (other.z - other.r);
         }
 
-        public boolean contains(int sliceX){
-            if(sliceX > (x -r) && sliceX < (x+r))
-                return true;
-            return false;
-        }
     }
 
     public static double modBS(double lowerBound, double sliceVolume){
@@ -40,28 +31,22 @@ public class Cheese {
         double hi = 100 *1000;
         double lo = lowerBound;
         while(hi > lo){
-            double local = (hi + lo) / 2.0;
-            //System.out.println("local = " + local);
-            double volDiff = sliceVolume - findVolume(lowerBound, local, sliceVolume);
+            double mid = (hi + lo) / 2.0;
+            //System.out.println("local = " + mid);
+            double volDiff = sliceVolume - findVolume(lowerBound, mid, sliceVolume);
             //System.out.println("Vol Diff = " + volDiff);
-            if(Math.abs(volDiff) < ERROR){
+            if(Math.abs(volDiff) < 1000){
                 //System.out.println("returned " + local);
-                return local;
+                return mid;
             }
             if(volDiff < 0){
-                hi = local;
+                hi = mid;
             } else {
-                lo = local;
+                lo = mid;
             }
         }
 
         return  -1;
-    }
-
-    public static double sphereSegment(double r, double d, double h){
-        //formula I found online is pih(R^2-d^2-hd-1/3h^2).
-        double inside = Math.pow(r,2) - Math.pow(d,2) - h*d - (1.0/3.0)*Math.pow(h,2);
-        return Math.PI * h * inside;
     }
 
     public static double sphereCap(double r, double h){
@@ -71,12 +56,12 @@ public class Cheese {
 
     public static double findVolume(double lower, double higher, double sliceVol){
         double startVolume = (higher - lower) * 100000 * 100000;
-        System.out.println("startVolume = " + startVolume);
-        System.out.println("slice volume = " + sliceVol);
-        System.out.println("upper = " + higher);
+        //System.out.println("startVolume = " + startVolume);
+        //System.out.println("slice volume = " + sliceVol);
+        //System.out.println("upper = " + higher);
         for(Hole hole : holes){
-            double leftmost = hole.x - hole.r;
-            double rightmost = hole.x + hole.r;
+            double leftmost = hole.z - hole.r;
+            double rightmost = hole.z + hole.r;
             if(rightmost < lower)
                 continue;
             if (leftmost > higher)
@@ -84,30 +69,27 @@ public class Cheese {
 
             // if fully contained
             if(leftmost >= lower && rightmost <= higher) {
-                System.out.println("Fully");
-                startVolume -= ((4 / 3.0) * Math.PI * Math.pow(hole.r, 3));
+                //System.out.println("Fully");
+                startVolume -= ((4.0 / 3.0) * Math.PI * Math.pow(hole.r, 3.0));
             } else if(leftmost < lower && rightmost <= higher){
-                System.out.println("leftbound");
+                //System.out.println("leftbound");
                 double h = rightmost - lower;
                 startVolume -= sphereCap(hole.r, h);
             }else if(leftmost >= lower && rightmost >  higher){
-                System.out.println("right");
-                System.out.println(hole.r);
-                if( hole.x > higher) {
-                    double h = higher - leftmost;
-                    startVolume = startVolume - sphereCap(hole.r, h);
-                } else{
-                    double h = higher - hole.x;
-                    startVolume = startVolume - sphereSegment(hole.r, 0, h);
-                    startVolume = startVolume - 0.5*((4.0 / 3.0) * Math.PI * Math.pow(hole.r, 3));
-                }
+                //System.out.println("right");
+                //System.out.println(hole.r);
+                double h = higher - leftmost;
+                startVolume = startVolume - sphereCap(hole.r, h);
             } else{
                 //System.out.println("overlap");
-                startVolume -= sphereSegment(hole.r, Math.abs(hole.x - lower), higher - lower);
+                double HoleVol = ((4.0 / 3.0) * Math.PI * Math.pow(hole.r, 3.0));
+                HoleVol -= sphereCap(hole.r, (hole.z + hole.r)- higher);
+                HoleVol -= sphereCap(hole.r, lower - (hole.z - hole.r));
+                startVolume -= HoleVol;
             }
 
         }
-        System.out.println("returned volume = " + startVolume);
+        //System.out.println("returned volume = " + startVolume);
         return startVolume;
     }
 
@@ -117,12 +99,12 @@ public class Cheese {
         double blockSliced = 0;
         while (slicesSliced < slices -1){
             double temp = modBS(blockSliced, sliceVolume);
-            System.out.printf("%.6f", (temp - blockSliced) / 1000);
+            System.out.printf("%.9f", (temp - blockSliced) / 1000);
             System.out.println();
             blockSliced = temp;
             slicesSliced ++;
         }
-        System.out.printf("%.6f", (100 * 1000 - blockSliced) / 1000);
+        System.out.printf("%.9f", (100 * 1000 - blockSliced) / 1000);
         System.out.println();
     }
 
@@ -141,16 +123,18 @@ public class Cheese {
                 int y = sc.nextInt();
                 int z = sc.nextInt();
 
-                holes[hole] = new Hole(x, y, z, r);
-                volume += (4 / 3.0) * Math.PI * Math.pow(r, 3);
+                holes[hole] = new Hole(z, r);
+                volume += (4.0 / 3.0) * Math.PI * Math.pow(r, 3.0);
             }
 
             Arrays.sort(holes);
-            double totalVolume = Math.pow(100 * 1000, 3) - volume;
+            double totalVolume = Math.pow(100 * 1000, 3.0) - volume;
             double volPerSlice = totalVolume / slices;
-            System.out.println(totalVolume);
-            System.out.println("Slice vol = " + volPerSlice);
+            //System.out.println(totalVolume);
+            //System.out.println("Slice vol = " + volPerSlice);
             calcVolume(volPerSlice);
         }
     }
 }
+
+
