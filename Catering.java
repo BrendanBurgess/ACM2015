@@ -31,7 +31,7 @@ public class Catering {
             }
 
             //set price from request to sink to 0
-            for(int request = numOfNodes - requests -1; request < numOfNodes -1; request++ ){
+            for(int request = teams + requests; request < numOfNodes -1; request++ ){
                 aMatrix[request][numOfNodes -1] = 0;
             }
 
@@ -63,6 +63,7 @@ public class Catering {
                 System.out.println();
             }
             */
+
             
             minCostMatching(aMatrix, requests, teams);
         }
@@ -77,24 +78,26 @@ public class Catering {
             }
         }
 
+        int nodePrices[] = new int[aMatrix.length];
         for(int path = 0; path < requests; path++) {
-            Djikstras(newAMatrix, aMatrix.length -1);
+            newAMatrix = Djikstras(newAMatrix, aMatrix.length -1);
+
             int currentNode = aMatrix.length - 1;
             while (currentNode != 0) {
-                newAMatrix[currentNode][parent[currentNode]] = aMatrix[parent[currentNode]][currentNode];
+                newAMatrix[currentNode][parent[currentNode]] = newAMatrix[parent[currentNode]][currentNode];
                 newAMatrix[parent[currentNode]][currentNode] = inf;
                 currentNode = parent[currentNode];
             }
 
-            int nodePrices[] = new int[aMatrix.length];
+
             for (int node = 0; node < aMatrix.length; node++){
-                nodePrices[node] = cost[node];
+                nodePrices[node] += cost[node];
             }
 
             for(int start = 1; start < teams + requests; start++){
                 for(int finish =0; finish < aMatrix.length; finish++){
                     if(finish != 0 && newAMatrix[start][finish] != inf)
-                        newAMatrix[start][finish] = nodePrices[start] + aMatrix[start][finish] -cost[finish];
+                        newAMatrix[start][finish] = nodePrices[start] + aMatrix[start][finish] - nodePrices[finish];
 
                 }
             }
@@ -102,7 +105,7 @@ public class Catering {
             for(int end = teams + requests; end < aMatrix.length - 1; end++){
                 for(int start = 0; start < aMatrix.length; start++){
                     if(start != aMatrix.length -1 && newAMatrix[end][start] != inf)
-                        newAMatrix[end][start] = nodePrices[start] + aMatrix[start][end] -cost[end];
+                        newAMatrix[end][start] = nodePrices[start] + aMatrix[start][end] - nodePrices[end];
 
                 }
             }
@@ -134,8 +137,8 @@ public class Catering {
     }
 
     //di
-    private void Djikstras(int[][] aMatrix, int Sink){
-        IndexMinPQ<Integer> pq = new IndexMinPQ<>(Sink +1);
+    private int[][] Djikstras(int[][] aMatrix, int Sink){
+        IndexMinPQ<Integer> pq = new IndexMinPQ<>(aMatrix.length);
         cost =  new int[aMatrix.length];
         parent = new int[aMatrix.length];
         for(int i = 0; i < aMatrix.length; i++){
@@ -158,7 +161,7 @@ public class Catering {
                 }
             }
         }
-
+        return aMatrix;
     }
 
 
